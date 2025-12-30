@@ -1,34 +1,35 @@
 import express from "express";
 import cors from "cors";
 import bodyParser from "body-parser";
-import lawyerRoutes from "./src/routes/lawyerRoutes.js";  // Підключення маршрутів
+import authRoutes from "./src/routes/authRoutes.js"; // Маршрути для авторизації
+import lawyerRoutes from "./src/routes/lawyerRoutes.js"; // Маршрути для юристів
+import { authenticateUser } from "./src/middleware/authenticateUser.js"; // Middleware для авторизації
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Middleware
-app.use(cors()); // Дозволяє обмін даними між різними доменами (CORS)
-app.use(bodyParser.json()); // Дозволяє працювати з JSON-форматом у запитах
+app.use(cors());
+app.use(bodyParser.json());
 
 /**
- * Головний маршрут
- * @route GET /
- * @description Проста відповідь для перевірки роботи API
+ * @route /auth
+ * @description Маршрути для авторизації та аутентифікації користувачів
  */
-app.get("/", (req, res) => {
-    res.send("API працює!");
-});
+app.use("/auth", authRoutes);
 
 /**
- * Підключення маршрутів
- * @description Використовує маршрути, визначені у файлі lawyerRoutes.js
+ * @route /api
+ * @description Основні API маршрути для роботи з юристами
  */
-app.use("/", lawyerRoutes);  // Тепер всі маршрути з lawyerRoutes.js будуть працювати
+app.use("/api", lawyerRoutes);
 
 /**
- * Запуск сервера
- * @description Сервер запускається на вказаному порту і прослуховує вхідні запити
+ * @route /lawyers
+ * @description Маршрути для юристів з обов'язковою перевіркою авторизації
+ * @middleware authenticateUser - перевірка токена користувача
  */
+app.use("/lawyers", authenticateUser, lawyerRoutes);
+
 app.listen(PORT, () => {
-    console.log(`Сервер запущено на порті ${PORT}`);
+    console.log(`Сервер запущено на порту ${PORT}`);
 });
